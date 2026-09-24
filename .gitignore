@@ -1,0 +1,55 @@
+# Dependencies
+backend/vendor/
+frontend/node_modules/
+
+# Environment
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# Laravel Generated
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*
+
+# Frontend Build
+frontend/dist/
+
+# Docker
+db-data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+backend/check_data.php
+backend/check_schema.php
+backend/dump_schema.php
+backend/test_staff.php
+backend/seed_test_dashboard.php
+
+# Prompt (pribadi)
+prompt.txt
+
+# Draft & Local Workspace Files
+diagram.drawio
+tai.drawio
+Architecture & Technical Planning.md
+readmecontohlms.md
+crosscheck_report.md.resolved
+file_apa_aja_yg_dipush.txt
+t.txt
+dashboard.png
+dev.bat
+nnt/
+roomsy/
