@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ReservationController extends Controller
 {
@@ -16,39 +17,64 @@ class ReservationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $filters = $request->validate([
+            'status' => 'nullable|string|in:pending,confirmed,checked_in,checked_out,cancelled',
+            'date' => 'nullable|date_format:Y-m-d',
+            'q' => 'nullable|string|max:100',
+        ]);
+
         $query = Reservation::with(['guest', 'room.roomType', 'payments', 'charges']);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
         }
-        if ($request->filled('date')) {
-            $query->whereDate('check_in_date', $request->date);
+        if (! empty($filters['date'])) {
+            $query->whereDate('check_in_date', $filters['date']);
+        }
+        if (! empty($filters['q'])) {
+            $q = $filters['q'];
+            $query->where(function ($qq) use ($q) {
+                $qq->where('reservation_code', 'like', "%{$q}%")
+                    ->orWhereHas('guest', function ($g) use ($q) {
+                        $g->where('name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('room', function ($r) use ($q) {
+                        $r->where('room_number', 'like', "%{$q}%");
+                    });
+            });
         }
 
         $reservations = $query->latest()->paginate(10);
+
         return response()->json($reservations);
     }
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'guest_name' => 'required|string|max:255',
-            'guest_email' => 'nullable|email',
-            'guest_phone' => 'nullable|string|max:20',
-            'room_id' => 'required|exists:rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'number_of_guests' => 'required|integer|min:1',
-            'special_requests' => 'nullable|string',
-        ]);
-
-        try {
-            $reservation = $this->reservationService->createManualReservation($validated);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        if ($idempotencyKey === '' || strlen($idempotencyKey) > 100) {
+            throw ValidationException::withMessages([
+                'idempotency_key' => 'Header Idempotency-Key wajib diisi dan maksimal 100 karakter.',
+            ]);
         }
 
-        return response()->json($reservation, 201);
+        $validated = $request->validate([
+            'guest_name' => 'required|string|max:255',
+            'guest_email' => 'nullable|email|max:254',
+            'guest_phone' => 'nullable|string|max:20',
+            'room_id' => 'required|integer|exists:rooms,id',
+            'check_in_date' => 'required|date|after_or_equal:today|before_or_equal:'.today()->addDays(365)->toDateString(),
+            'check_out_date' => 'required|date|after:check_in_date|before_or_equal:'.today()->addDays(366)->toDateString(),
+            'number_of_guests' => 'required|integer|min:1|max:20',
+            'special_requests' => 'nullable|string|max:2000',
+        ]);
+        $validated['idempotency_key'] = $idempotencyKey;
+
+        $reservation = $this->reservationService->createManualReservation($validated);
+
+        return response()->json($reservation, $reservation->wasRecentlyCreated ? 201 : 200);
     }
 
     public function show(Reservation $reservation): JsonResponse
@@ -60,28 +86,20 @@ class ReservationController extends Controller
     {
         $validated = $request->validate([
             'room_id' => 'required|exists:rooms,id',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'number_of_guests' => 'required|integer|min:1',
-            'special_requests' => 'nullable|string',
+            'check_in_date' => 'required|date|after_or_equal:today|before_or_equal:'.today()->addDays(365)->toDateString(),
+            'check_out_date' => 'required|date|after:check_in_date|before_or_equal:'.today()->addDays(366)->toDateString(),
+            'number_of_guests' => 'required|integer|min:1|max:20',
+            'special_requests' => 'nullable|string|max:2000',
         ]);
 
-        try {
-            $reservation = $this->reservationService->updateReservation($reservation, $validated);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $reservation = $this->reservationService->updateReservation($reservation, $validated);
 
         return response()->json($reservation);
     }
 
     public function destroy(Reservation $reservation): JsonResponse
     {
-        try {
-            $this->reservationService->cancelReservation($reservation);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $this->reservationService->cancelReservation($reservation);
 
         return response()->json(['message' => 'Reservasi berhasil dibatalkan.']);
     }

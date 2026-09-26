@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 
 class Reservation extends Model
 {
+    protected $hidden = [
+        'idempotency_key',
+    ];
+
     protected $fillable = [
         'reservation_code',
         'guest_id',
@@ -19,6 +23,7 @@ class Reservation extends Model
         'status',
         'total_price',
         'special_requests',
+        'idempotency_key',
     ];
 
     protected function casts(): array
@@ -33,7 +38,7 @@ class Reservation extends Model
 
     public static function generateCode(): string
     {
-        return 'RSV' . strtoupper(now()->format('ymdHis') . Str::random(3));
+        return 'RSV'.strtoupper(now()->format('ymdHis').Str::random(16));
     }
 
     public function guest(): BelongsTo

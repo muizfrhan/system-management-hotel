@@ -15,13 +15,17 @@ class CheckInOutController extends Controller
 
     public function index(): JsonResponse
     {
-        $checkIns = Reservation::with(['guest', 'room.roomType'])
+        $checkIns = Reservation::with(['guest', 'room.roomType', 'charges', 'payments'])
             ->where('status', 'confirmed')
             ->whereDate('check_in_date', '<=', today())
+            ->orderBy('check_in_date')
+            ->limit(100)
             ->get();
 
-        $checkOuts = Reservation::with(['guest', 'room.roomType'])
+        $checkOuts = Reservation::with(['guest', 'room.roomType', 'charges', 'payments'])
             ->where('status', 'checked_in')
+            ->orderBy('check_out_date')
+            ->limit(100)
             ->get();
 
         return response()->json([

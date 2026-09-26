@@ -1,8 +1,19 @@
 <template>
   <div class="space-y-8">
+    <AlertBox v-if="loadError" variant="error" title="Gagal memuat dashboard">
+      <div class="flex flex-wrap items-center gap-3 mt-1">
+        <span>{{ loadError }}</span>
+        <BaseButton type="button" variant="outline" size="sm" :loading="loading" @click="fetchData">Coba Lagi</BaseButton>
+      </div>
+    </AlertBox>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <div v-for="card in roomStatCards" :key="card.label" class="group relative bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-lg hover:shadow-slate-200/50 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+    <div v-else-if="loading && !loaded" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4" aria-hidden="true">
+      <div v-for="n in 6" :key="`dashboard-skeleton-${n}`" class="skeleton skeleton-kpi"></div>
+    </div>
+
+    <div v-else class="space-y-8">
+      <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div v-for="card in roomStatCards" :key="card.label" class="group relative bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-lg hover:shadow-slate-200/50 hover:-translate-y-0.5 transition-[box-shadow,transform,border-color] duration-200 ease-out overflow-hidden">
         <div class="absolute -right-3 -top-3 opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
           <component :is="card.icon" class="w-20 h-20" />
         </div>
@@ -10,12 +21,12 @@
           <component :is="card.icon" :class="['w-5 h-5', card.iconColor]" />
         </div>
         <p class="text-3xl font-extrabold text-slate-900 mb-1">{{ card.value }}</p>
-        <p :class="['text-[11px] font-bold uppercase tracking-wider', card.labelColor]">{{ card.label }}</p>
+        <p :class="['text-xs font-bold uppercase tracking-wider', card.labelColor]">{{ card.label }}</p>
       </div>
-    </div>
+      </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-      <div class="relative bg-gradient-to-br from-emerald-50 to-emerald-100/60 rounded-2xl border border-emerald-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-emerald-100/50 transition-all duration-300">
+      <div class="relative bg-linear-to-br from-emerald-50 to-emerald-100/60 rounded-2xl border border-emerald-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-emerald-100/50 hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
         <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
           <LogIn class="w-24 h-24" />
         </div>
@@ -30,7 +41,7 @@
         </div>
       </div>
 
-      <div class="relative bg-gradient-to-br from-indigo-50 to-indigo-100/60 rounded-2xl border border-indigo-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300">
+      <div class="relative bg-linear-to-br from-indigo-50 to-indigo-100/60 rounded-2xl border border-indigo-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-indigo-100/50 hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
         <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
           <LogOut class="w-24 h-24" />
         </div>
@@ -45,7 +56,7 @@
         </div>
       </div>
 
-      <div class="relative bg-gradient-to-br from-amber-50 to-amber-100/60 rounded-2xl border border-amber-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-amber-100/50 transition-all duration-300">
+      <div class="relative bg-linear-to-br from-amber-50 to-amber-100/60 rounded-2xl border border-amber-200/50 p-6 overflow-hidden group hover:shadow-lg hover:shadow-amber-100/50 hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
         <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
           <Hourglass class="w-24 h-24" />
         </div>
@@ -60,18 +71,18 @@
         </div>
       </div>
 
-      <div class="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 overflow-hidden group hover:shadow-xl hover:shadow-slate-900/30 transition-all duration-300">
+      <div class="relative bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-6 overflow-hidden group hover:shadow-xl hover:shadow-slate-900/30 hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
         <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-opacity">
           <Wallet class="w-32 h-32" />
         </div>
-        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-bl-full"></div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-linear-to-bl from-cyan-500/10 to-transparent rounded-bl-full"></div>
         <div class="flex items-center gap-4 relative z-10">
-          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+          <div class="w-14 h-14 rounded-2xl bg-linear-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
             <Wallet class="w-7 h-7 text-white" />
           </div>
           <div>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pendapatan Bulan Ini</p>
-            <p class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 -mt-0.5">{{ formatCurrency(stats.monthly_revenue) }}</p>
+            <p class="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-400 -mt-0.5 wrap-break-word tabular-nums min-w-0 truncate">{{ formatCurrency(stats.monthly_revenue) }}</p>
           </div>
         </div>
       </div>
@@ -83,7 +94,7 @@
           <TrendingUp class="w-5 h-5 text-cyan-500" />
           Pendapatan 7 Hari Terakhir
         </h3>
-        <div style="height: 280px">
+        <div class="h-55 sm:h-70">
           <Bar v-if="dailyRevenueData" :data="dailyRevenueData" :options="barOptions" />
         </div>
       </div>
@@ -92,7 +103,7 @@
           <PieChart class="w-5 h-5 text-violet-500" />
           Status Reservasi
         </h3>
-        <div style="height: 280px" class="flex items-center justify-center">
+        <div class="h-55 sm:h-70 flex items-center justify-center">
           <Doughnut v-if="statusChartData" :data="statusChartData" :options="doughnutOptions" />
         </div>
       </div>
@@ -103,7 +114,7 @@
         <BarChart3 class="w-5 h-5 text-indigo-500" />
         Tren Bulanan (6 Bulan)
       </h3>
-      <div style="height: 280px">
+      <div class="h-55 sm:h-70">
         <Line v-if="monthlyChartData" :data="monthlyChartData" :options="lineOptions" />
       </div>
     </div>
@@ -118,15 +129,15 @@
         </h3>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full min-w-180">
           <thead>
             <tr class="bg-slate-50/80">
-              <th class="text-left px-4 sm:px-7 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kode</th>
-              <th class="text-left px-4 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tamu</th>
-              <th class="text-left px-4 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Kamar</th>
-              <th class="text-left px-4 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Check-in</th>
-              <th class="text-left px-4 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
-              <th class="text-right px-4 sm:px-7 py-3.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total</th>
+              <th class="text-left px-4 sm:px-7 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Kode</th>
+              <th class="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Tamu</th>
+              <th class="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Kamar</th>
+              <th class="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Check-in</th>
+              <th class="text-left px-4 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+              <th class="text-right px-4 sm:px-7 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -140,7 +151,7 @@
                 </div>
               </td>
               <td class="px-4 py-4 text-sm text-slate-600 font-medium">{{ formatDate(r.check_in_date) }}</td>
-              <td class="px-4 py-4"><span :class="'badge badge-' + r.status">{{ statusLabel(r.status) }}</span></td>
+              <td class="px-4 py-4"><StatusBadge :status="r.status" :label="statusLabel(r.status)" /></td>
               <td class="px-4 sm:px-7 py-4 text-sm font-bold text-slate-800 text-right">{{ formatCurrency(r.total_price) }}</td>
             </tr>
             <tr v-if="!stats.recent_reservations?.length">
@@ -158,6 +169,7 @@
         </table>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -174,24 +186,40 @@ import {
 } from 'chart.js'
 import { Bar, Line, Doughnut } from 'vue-chartjs'
 import api from '../../services/api'
+import StatusBadge from '../../components/ui/StatusBadge.vue'
+import AlertBox from '../../components/ui/AlertBox.vue'
+import BaseButton from '../../components/ui/BaseButton.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler)
 
 const stats = ref({})
+const loading = ref(false)
+const loaded = ref(false)
+const loadError = ref('')
 
-onMounted(async () => {
+onMounted(fetchData)
+
+async function fetchData() {
+  if (loading.value) return
+  loading.value = true
+  loadError.value = ''
   try {
     const response = await api.get('/admin/dashboard')
-    stats.value = response.data
-  } catch {}
-})
+    stats.value = response.data || {}
+    loaded.value = true
+  } catch (error) {
+    loadError.value = error.response?.data?.message || 'Dashboard tidak dapat dimuat.'
+  } finally {
+    loading.value = false
+  }
+}
 
 const roomStatCards = computed(() => [
   { label: 'Total Kamar', value: stats.value.rooms?.total || 0, icon: BedDouble, iconBg: 'bg-slate-100', iconColor: 'text-slate-600', labelColor: 'text-slate-500' },
   { label: 'Tersedia', value: stats.value.rooms?.available || 0, icon: CircleCheckBig, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', labelColor: 'text-emerald-600' },
   { label: 'Terisi', value: stats.value.rooms?.occupied || 0, icon: Users, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', labelColor: 'text-blue-600' },
   { label: 'Dipesan', value: stats.value.rooms?.reserved || 0, icon: CalendarClock, iconBg: 'bg-amber-100', iconColor: 'text-amber-600', labelColor: 'text-amber-600' },
-  { label: 'Dibersihkan', value: stats.value.rooms?.cleaning || 0, icon: SprayCan, iconBg: 'bg-orange-100', iconColor: 'text-orange-600', labelColor: 'text-orange-600' },
+  { label: 'Perlu Dibersihkan', value: stats.value.rooms?.cleaning || 0, icon: SprayCan, iconBg: 'bg-orange-100', iconColor: 'text-orange-600', labelColor: 'text-orange-600' },
   { label: 'Pemeliharaan', value: stats.value.rooms?.maintenance || 0, icon: Wrench, iconBg: 'bg-red-100', iconColor: 'text-red-600', labelColor: 'text-red-600' },
 ])
 

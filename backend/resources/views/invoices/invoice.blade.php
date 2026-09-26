@@ -57,7 +57,7 @@
         </div>
         <div class="meta-box" style="text-align: right;">
             <h3>Status Pembayaran</h3>
-            <p><span class="status-paid">{{ $payment->status === 'paid' ? 'LUNAS' : 'BELUM LUNAS' }}</span></p>
+            <p><span class="status-paid">{{ $settlement_status === 'paid' ? 'LUNAS' : 'BELUM LUNAS' }}</span></p>
             <p style="margin-top: 8px; color: #64748b;">Metode: {{ $payment->payment_method ?: '-' }}</p>
         </div>
     </div>
@@ -96,6 +96,8 @@
     <div class="totals">
         <div class="row label"><span>Total Kamar</span><span>Rp {{ number_format($room_total, 0, ',', '.') }}</span></div>
         <div class="row label"><span>Biaya Tambahan</span><span>Rp {{ number_format($charges_total, 0, ',', '.') }}</span></div>
+        <div class="row label"><span>Sudah Dibayar</span><span>Rp {{ number_format($paid_total, 0, ',', '.') }}</span></div>
+        <div class="row label"><span>Sisa Tagihan</span><span>Rp {{ number_format($remaining, 0, ',', '.') }}</span></div>
         <div class="row grand"><span>TOTAL</span><span>Rp {{ number_format($grand_total, 0, ',', '.') }}</span></div>
     </div>
 

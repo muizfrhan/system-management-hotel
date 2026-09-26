@@ -1,5 +1,5 @@
 <template>
-  <span :class="badgeClass" class="badge">{{ displayLabel }}</span>
+  <span :class="['badge', badgeClass]">{{ displayLabel }}</span>
 </template>
 
 <script setup>
@@ -7,13 +7,14 @@ import { computed } from 'vue'
 
 const props = defineProps({
   status: { type: String, required: true },
+  label: { type: String, default: '' },
 })
 
 const statusMap = {
   available: 'Tersedia',
   occupied: 'Terisi',
   reserved: 'Dipesan',
-  cleaning: 'Dibersihkan',
+  cleaning: 'Perlu Dibersihkan',
   maintenance: 'Pemeliharaan',
   pending: 'Tertunda',
   confirmed: 'Dikonfirmasi',
@@ -24,6 +25,6 @@ const statusMap = {
   unpaid: 'Belum Bayar',
 }
 
-const displayLabel = computed(() => statusMap[props.status] || props.status)
+const displayLabel = computed(() => props.label || statusMap[props.status] || props.status)
 const badgeClass = computed(() => `badge-${props.status}`)
 </script>

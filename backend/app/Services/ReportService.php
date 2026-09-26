@@ -30,14 +30,25 @@ class ReportService
             ->take(20)
             ->get();
 
+        $dailyPayments = Payment::where('status', 'paid')
+            ->whereBetween('paid_at', [$from, $toEnd])
+            ->selectRaw('DATE(paid_at) as day, SUM(amount) as aggregate')
+            ->groupBy('day')
+            ->pluck('aggregate', 'day');
+
+        $dailyReservations = Reservation::whereBetween('created_at', [$from, $toEnd])
+            ->selectRaw('DATE(created_at) as day, COUNT(*) as aggregate')
+            ->groupBy('day')
+            ->pluck('aggregate', 'day');
+
         $period = CarbonPeriod::create($from, $to);
-        $dailyChart = collect($period)->map(function ($date) {
+        $dailyChart = collect($period)->map(function ($date) use ($dailyPayments, $dailyReservations) {
+            $day = $date->toDateString();
+
             return [
                 'label' => $date->translatedFormat('d M'),
-                'revenue' => (float) Payment::where('status', 'paid')
-                    ->whereDate('paid_at', $date)
-                    ->sum('amount'),
-                'reservations' => Reservation::whereDate('created_at', $date)->count(),
+                'revenue' => (float) ($dailyPayments[$day] ?? 0),
+                'reservations' => (int) ($dailyReservations[$day] ?? 0),
             ];
         })->values();
 

@@ -44,6 +44,7 @@ class DashboardController extends Controller
 
             $dailyRevenue = collect(range(6, 0))->map(function ($daysAgo) {
                 $date = Carbon::today()->subDays($daysAgo);
+
                 return [
                     'label' => $date->translatedFormat('d M'),
                     'revenue' => (float) Payment::where('status', 'paid')
@@ -55,6 +56,7 @@ class DashboardController extends Controller
 
             $monthlyChart = collect(range(5, 0))->map(function ($monthsAgo) {
                 $date = Carbon::today()->subMonths($monthsAgo);
+
                 return [
                     'label' => $date->translatedFormat('M Y'),
                     'revenue' => (float) Payment::where('status', 'paid')

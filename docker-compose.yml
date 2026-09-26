@@ -6,7 +6,7 @@ services:
     container_name: lokanata-backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend:/var/www/html
       - backend-vendor:/var/www/html/vendor
@@ -14,21 +14,25 @@ services:
       db:
         condition: service_healthy
     environment:
-      APP_NAME: "Lokanata Hotel"
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: http://localhost:8000
-      FRONTEND_URL: http://localhost:3000
+      APP_NAME: "${APP_NAME:-Lokanata Hotel}"
+      APP_ENV: "${APP_ENV:-local}"
+       APP_DEBUG: "${APP_DEBUG:-false}"
+       APP_TIMEZONE: "${APP_TIMEZONE:-Asia/Jakarta}"
+       APP_KEY: "${APP_KEY:?APP_KEY must be set}"
+      APP_URL: "${APP_URL:-http://localhost:8000}"
+      FRONTEND_URL: "${FRONTEND_URL:-http://localhost:3000}"
       DB_CONNECTION: mysql
       DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: lokanata_hotel
-      DB_USERNAME: lokanata
-      DB_PASSWORD: lokanata_secret
-      SANCTUM_STATEFUL_DOMAINS: "localhost:3000,localhost:8000"
+      DB_PORT: "3306"
+      DB_DATABASE: "${DB_DATABASE:-lokanata_hotel}"
+      DB_USERNAME: "${DB_USERNAME:-lokanata}"
+      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD must be set}"
+      SANCTUM_STATEFUL_DOMAINS: "${SANCTUM_STATEFUL_DOMAINS:-localhost:3000,localhost:8000}"
       SESSION_DRIVER: database
+      SESSION_SECURE_COOKIE: "${SESSION_SECURE_COOKIE:-false}"
       CACHE_STORE: database
       QUEUE_CONNECTION: database
+      RUN_MIGRATIONS: "${RUN_MIGRATIONS:-true}"
     networks:
       - lokanata-net
 
@@ -39,14 +43,14 @@ services:
     container_name: lokanata-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
     depends_on:
       - backend
     environment:
-      VITE_API_BASE_URL: http://localhost:8000
+      BACKEND_URL: "${BACKEND_URL:-http://backend:8000}"
     networks:
       - lokanata-net
 
@@ -55,16 +59,16 @@ services:
     container_name: lokanata-db
     restart: unless-stopped
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root_secret
-      MYSQL_DATABASE: lokanata_hotel
-      MYSQL_USER: lokanata
-      MYSQL_PASSWORD: lokanata_secret
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD must be set}"
+      MYSQL_DATABASE: "${DB_DATABASE:-lokanata_hotel}"
+      MYSQL_USER: "${DB_USERNAME:-lokanata}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD must be set}"
     volumes:
       - db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysqladmin ping -h localhost -u root --silent"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -76,11 +80,12 @@ services:
     container_name: lokanata-pma
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     environment:
       PMA_HOST: db
-      PMA_PORT: 3306
-      MYSQL_ROOT_PASSWORD: root_secret
+      PMA_PORT: "3306"
+      PMA_USER: root
+      PMA_PASSWORD: "${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD must be set}"
     depends_on:
       db:
         condition: service_healthy

@@ -1,48 +1,51 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-if [ ! -f .env ]; then
-    cp .env.example .env 2>/dev/null || true
+DB_HOST="${DB_HOST:-db}"
+DB_PORT="${DB_PORT:-3306}"
+DB_USERNAME="${DB_USERNAME:-lokanata}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+DB_WAIT_RETRIES="${DB_WAIT_RETRIES:-30}"
+DB_WAIT_INTERVAL="${DB_WAIT_INTERVAL:-2}"
+RUN_MIGRATIONS="${RUN_MIGRATIONS:-true}"
+
+if [ -z "${APP_KEY:-}" ]; then
+    echo "APP_KEY must be provided." >&2
+    exit 1
 fi
 
-if [ -n "$APP_KEY" ]; then
-    sed -i "s|APP_KEY=.*|APP_KEY=$APP_KEY|" .env
+if ! [[ "$DB_WAIT_RETRIES" =~ ^[1-9][0-9]*$ ]]; then
+    echo "DB_WAIT_RETRIES must be a positive integer." >&2
+    exit 1
 fi
 
-if [ -n "$DB_HOST" ]; then
-    sed -i "s|DB_HOST=.*|DB_HOST=$DB_HOST|" .env
-    sed -i "s|DB_PORT=.*|DB_PORT=${DB_PORT:-3306}|" .env
-    sed -i "s|DB_DATABASE=.*|DB_DATABASE=${DB_DATABASE:-lokanata_hotel}|" .env
-    sed -i "s|DB_USERNAME=.*|DB_USERNAME=${DB_USERNAME:-lokanata}|" .env
-    sed -i "s|DB_PASSWORD=.*|DB_PASSWORD=${DB_PASSWORD:-lokanata_secret}|" .env
-fi
-
-if [ -n "$APP_URL" ]; then
-    sed -i "s|APP_URL=.*|APP_URL=$APP_URL|" .env
-fi
-
-if [ -n "$FRONTEND_URL" ]; then
-    sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=$FRONTEND_URL|" .env
-fi
-
-if [ -n "$SANCTUM_STATEFUL_DOMAINS" ]; then
-    sed -i "s|SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=$SANCTUM_STATEFUL_DOMAINS|" .env
+if [ "$RUN_MIGRATIONS" != "true" ] && [ "$RUN_MIGRATIONS" != "false" ]; then
+    echo "RUN_MIGRATIONS must be true or false." >&2
+    exit 1
 fi
 
 echo "Waiting for database..."
-until mysqladmin ping -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" --silent 2>/dev/null; do
-    sleep 2
+attempt=1
+while [ "$attempt" -le "$DB_WAIT_RETRIES" ]; do
+    if MYSQL_PWD="$DB_PASSWORD" mysqladmin ping -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" --connect-timeout=2 --silent; then
+        echo "Database is ready!"
+        break
+    fi
+
+    if [ "$attempt" -eq "$DB_WAIT_RETRIES" ]; then
+        echo "Database did not become ready after ${DB_WAIT_RETRIES} attempts." >&2
+        exit 1
+    fi
+
+    attempt=$((attempt + 1))
+    sleep "$DB_WAIT_INTERVAL"
 done
-echo "Database is ready!"
 
-php artisan key:generate --force --no-interaction 2>/dev/null || true
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    php artisan migrate --force --no-interaction
+fi
 
-php artisan migrate --force --no-interaction
-
-php artisan storage:link 2>/dev/null || true
-
-php artisan db:seed --force --no-interaction 2>/dev/null || true
+php artisan storage:link --force
 
 echo "Backend is ready!"
-
 exec "$@"

@@ -16,8 +16,8 @@ class LoginController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => 'required|string|max:254|email',
+            'password' => 'required|string|max:1024',
         ]);
 
         $result = $this->authService->attempt($request->email, $request->password);
@@ -34,6 +34,6 @@ class LoginController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        return response()->json($request->user()?->only(['id', 'name', 'email', 'role']));
     }
 }

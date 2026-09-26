@@ -2,6 +2,8 @@
 
 **Lokanata HMS** Sistem Manajemen Hotel berbasis web yang dirancang untuk mengelola seluruh operasional hotel secara digital, mulai dari pemesanan kamar online oleh tamu, pengelolaan reservasi oleh resepsionis, hingga manajemen tata graha (housekeeping). Dibangun dengan stack **Laravel 12 (Backend REST API)** dan **Vue.js 3 + Vite**.
 
+**Pembuat:** Muhamad Farhan Muizaddin
+
 ---
 
 ## Fitur & Aktor Terlibat
@@ -12,6 +14,8 @@ Sistem ini melibatkan 4 aktor utama:
 2.  **Resepsionis**: Mengelola booking online (terima/tolak), membuat reservasi manual, proses check-in & check-out, pencatatan pembayaran & faktur, serta mengelola data tamu.
 3.  **Tata Graha (Housekeeping)**: Melihat daftar kamar yang perlu dibersihkan dan memperbarui status kebersihan kamar.
 4.  **Admin / Manajer**: Memiliki akses penuh ke seluruh fitur sistem, termasuk dashboard statistik, manajemen staf, tipe kamar, daftar kamar, fasilitas, pengaturan landing page, dan laporan pendapatan/reservasi.
+
+Autentikasi portal staf menggunakan session cookie Laravel Sanctum untuk SPA (CSRF cookie dan proteksi cookie), bukan bearer token. Endpoint publik tetap hanya tersedia untuk landing page, booking, dan pelacakan reservasi.
 
 ---
 
@@ -38,7 +42,7 @@ https://github.com/user-attachments/assets/3a730b09-f9d5-447e-83f9-87296d7a1880
 ## Struktur & Perancangan Sistem
 
 ### 1. Database Entity Relationship Diagram (ERD)
-Sistem database ini memiliki 9 tabel dengan integritas relasi antar-tabel.
+Sistem database ini memiliki 10 tabel domain dengan integritas relasi antar-tabel.
 ![ERD Diagram](frontend/diagrams/erd.svg)
 
 ### 2. Use Case Diagram
@@ -53,68 +57,107 @@ Alur jalannya interaksi user dari 4 perspektif: Tamu, Resepsionis, Tata Graha, d
 
 ## Menjalankan Aplikasi
 
-berjalan pada ekosistem menggunakan stack berikut:
+Aplikasi menggunakan stack berikut:
 - **PHP** >= 8.2
 - **Composer** v2+
-- **Node.js** v20+
+- **Node.js** v20.19+ (`.nvmrc` tersedia di `frontend/`)
 - **Database** MySQL / MariaDB (Dianjurkan via Container/Docker)
 
-### Menjalankan via Docker (Recommended)
-Pada project ini **sudah disediakan Native Container Mapping** untuk proses development cepat.
+### Menjalankan via Docker (Development)
 
+Docker Compose menyediakan workflow development dengan pemetaan port lokal dan volume bernama. Compose ini hanya untuk development, bukan konfigurasi production.
+
+**1. Siapkan environment Compose**
+
+Salin template dari root project:
+```bash
+cp .env.example .env
+```
+
+Di PowerShell, gunakan `Copy-Item .env.example .env`. Jangan commit file `.env`.
+
+**2. Isi secret dan APP_KEY**
+
+Edit `.env`, lalu isi `DB_PASSWORD` dan `DB_ROOT_PASSWORD` dengan password kuat dan unik. Jangan memakai credential default. Generate APP_KEY dengan PHP:
+```bash
+php -r "echo 'APP_KEY=base64:' . base64_encode(random_bytes(32)) . PHP_EOL;"
+```
+
+Salin baris hasil perintah ke `APP_KEY` pada `.env`. Nilai `RUN_MIGRATIONS=true` menjalankan migration saat container backend mulai; ubah menjadi `false` bila migration dikelola terpisah.
+
+**3. Jalankan container**
 ```bash
 docker compose up -d --build
 ```
 
-Setelah dijalankan, Anda bisa mengakses url lokal berikut:
-- **Frontend App:** `http://localhost:3000`
+URL development:
+- **Frontend App (Docker):** `http://localhost:3000`
 - **Backend/API:** `http://localhost:8000`
 - **phpMyAdmin:** `http://localhost:8080`
+
+Port Docker dipublish hanya ke `127.0.0.1`. Login phpMyAdmin menggunakan user root dan password yang disimpan di `DB_ROOT_PASSWORD`.
 
 ### Menjalankan Tanpa Docker (Manual)
 
 **1. Siapkan Database**
 
-Buat database MySQL dengan nama `lokanata_hotel`, pastikan service MySQL/MariaDB sudah berjalan di komputer Anda (misalnya via XAMPP atau Laragon).
+Pastikan MySQL/MariaDB berjalan, buat database, dan siapkan credential database Anda sendiri.
 
 **2. Setup Backend**
 
 ```bash
 cd backend
 composer install
-copy .env.example .env
+cp .env.example .env
 ```
 
-Sesuaikan file `.env` pada bagian database:
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=lokanata_hotel
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Lanjutkan:
+Sesuaikan `backend/.env` untuk database lokal. Template manual menggunakan `DB_HOST=127.0.0.1`, `FRONTEND_URL=http://localhost:5173`, `SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:8000`, dan `SESSION_SECURE_COOKIE=false`. Isi credential database secara manual, lalu jalankan:
 ```bash
 php artisan key:generate
 php artisan migrate --force
-php artisan db:seed --force
-php artisan serve --port=8000
+php artisan storage:link
+php artisan serve --host=127.0.0.1 --port=8000
 ```
+
+`php artisan db:seed` bersifat idempotent untuk data master. Akun demo hanya dibuat pada environment `local`/`testing` bila `DEMO_USER_PASSWORD` diisi secara lokal; production harus membuat akun staf melalui prosedur provisioning yang dikontrol.
 
 **3. Setup Frontend**
 
 Buka terminal baru:
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
 **4. Akses Aplikasi**
+- **Frontend App (manual):** `http://localhost:5173`
 - **Backend/API:** `http://localhost:8000`
-- **Frontend App:** `http://localhost:5173`
+
+Untuk manual development, pastikan `FRONTEND_URL` dan `SANCTUM_STATEFUL_DOMAINS` menggunakan port `5173`/`8000` serta `DB_HOST=127.0.0.1`. Untuk Docker, root `.env` memakai `DB_HOST=db` dan port frontend `3000`; proxy internal Vite mengarah ke `http://backend:8000`.
+
+### Catatan Deployment
+
+Docker Compose di repository ini development-only. Production memerlukan TLS dan reverse proxy, secret manager untuk `APP_KEY` serta password, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true`, dan migration yang dikelola secara terkontrol. Repository ini tidak menyediakan konfigurasi production atau jaminan keamanan deployment. Jika credential lama pernah dipakai di environment publik, rotasi password database/root, akun staf, dan `APP_KEY`, invalidate seluruh session, serta amankan atau hapus log lama.
+
+### Verifikasi
+
+```bash
+cd backend
+composer validate --strict
+composer audit --locked
+vendor/bin/pint --test
+php artisan test
+```
+
+```bash
+cd frontend
+npm ci
+npm audit
+npm run build
+```
+
+Feature test backend mencakup role isolation, authentication JSON response, kapasitas dan konflik booking, transisi check-in/out, payment balance, housekeeping, pelacakan publik, dan penghapusan data historis. Frontend belum memiliki automated unit/E2E test; verifikasi frontend saat ini mencakup production build dan smoke test manual.
 
 ---
 
@@ -161,9 +204,8 @@ lokanata-hotel-management/
 |   |-- package.json
 |   |-- vite.config.js
 |
-|-- diagram.drawio                  # Source file diagram (editable)
 |-- docker-compose.yml
-|-- dev.bat
+|-- .env.example
 |-- .gitignore
 |-- README.md
 ```
@@ -172,12 +214,12 @@ lokanata-hotel-management/
 
 ## Lisensi
 
-Project ini dilisensikan di bawah [MIT License](LICENSE).
+Project ini dilisensikan di bawah MIT License.
 
 ```
 MIT License
 
-Copyright (c) 2026 Cybha
+Copyright (c) 2026 Muhamad Farhan Muizaddin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

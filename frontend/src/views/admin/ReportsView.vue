@@ -3,25 +3,35 @@
     <h1 class="page-title">Laporan</h1>
     <div class="card">
       <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-end mb-6">
-        <div class="flex-1"><label class="label">Dari</label><input v-model="from" type="date" class="input-field" /></div>
-        <div class="flex-1"><label class="label">Sampai</label><input v-model="to" type="date" class="input-field" /></div>
-        <button @click="fetchData" class="btn-primary sm:shrink-0">Filter</button>
+         <div class="flex-1"><label class="label" for="report-from">Dari</label><input id="report-from" v-model="from" type="date" class="input-field" /></div>
+         <div class="flex-1"><label class="label" for="report-to">Sampai</label><input id="report-to" v-model="to" type="date" class="input-field" /></div>
+         <BaseButton type="button" :loading="loading" :disabled="loading" @click="fetchData">Filter</BaseButton>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="stat-card bg-blue-50"><p class="text-xs font-semibold text-[var(--text-secondary)] uppercase">Total Reservasi</p><p class="text-3xl font-bold text-blue-700">{{ report.total_reservations }}</p></div>
         <div class="stat-card bg-green-50"><p class="text-xs font-semibold text-[var(--text-secondary)] uppercase">Dikonfirmasi</p><p class="text-3xl font-bold text-green-700">{{ report.confirmed_reservations }}</p></div>
         <div class="stat-card bg-red-50"><p class="text-xs font-semibold text-[var(--text-secondary)] uppercase">Dibatalkan</p><p class="text-3xl font-bold text-red-700">{{ report.cancelled_reservations }}</p></div>
-        <div class="stat-card bg-[var(--accent)]/10"><p class="text-xs font-semibold text-[var(--text-secondary)] uppercase">Total Pendapatan</p><p class="text-2xl font-bold text-[var(--primary)]">{{ formatCurrency(report.total_revenue) }}</p></div>
+        <div class="stat-card bg-[var(--accent)]/10"><p class="text-xs font-semibold text-[var(--text-secondary)] uppercase">Total Pendapatan</p><p class="text-xl sm:text-2xl font-bold text-[var(--primary)] wrap-break-word tabular-nums">{{ formatCurrency(report.total_revenue) }}</p></div>
       </div>
-    </div>
+       <AlertBox v-if="fetchError" variant="error" class="mt-4" title="Gagal memuat laporan">
+         <div class="flex flex-wrap items-center gap-3 mt-1">
+           <span>{{ fetchError }}</span>
+           <BaseButton type="button" variant="outline" size="sm" :loading="loading" @click="fetchData">Coba Lagi</BaseButton>
+         </div>
+       </AlertBox>
+     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+     <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-hidden="true">
+       <div v-for="n in 4" :key="`report-skeleton-${n}`" class="skeleton skeleton-kpi"></div>
+     </div>
+
+     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
         <h3 class="text-base font-bold text-slate-800 mb-5 flex items-center gap-2">
           <TrendingUp class="w-5 h-5 text-cyan-500" />
           Pendapatan Harian
         </h3>
-        <div style="height: 300px">
+        <div class="h-[240px] sm:h-[300px]">
           <Bar v-if="dailyChartData" :data="dailyChartData" :options="barOptions" />
           <div v-else class="h-full flex items-center justify-center text-slate-400 text-sm">Tidak ada data untuk periode ini</div>
         </div>
@@ -31,7 +41,7 @@
           <PieChart class="w-5 h-5 text-violet-500" />
           Status Reservasi
         </h3>
-        <div style="height: 300px" class="flex items-center justify-center">
+        <div class="h-[240px] sm:h-[300px] flex items-center justify-center">
           <Doughnut v-if="statusChartData" :data="statusChartData" :options="doughnutOptions" />
           <div v-else class="text-slate-400 text-sm">Tidak ada data</div>
         </div>
@@ -46,14 +56,14 @@
         </h3>
       </div>
       <div class="overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full min-w-[560px]">
           <thead>
             <tr class="bg-slate-50/80">
-              <th class="text-left px-4 sm:px-7 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reservasi</th>
-              <th class="text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tamu</th>
-              <th class="text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Metode</th>
-              <th class="text-left px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tanggal</th>
-              <th class="text-right px-4 sm:px-7 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jumlah</th>
+              <th class="text-left px-4 sm:px-7 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Reservasi</th>
+              <th class="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Tamu</th>
+              <th class="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Metode</th>
+              <th class="text-left px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Tanggal</th>
+              <th class="text-right px-4 sm:px-7 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Jumlah</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -77,19 +87,44 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement,
   Title, Tooltip, Legend
 } from 'chart.js'
-import { Bar, Doughnut } from 'vue-chartjs'
-import api from '../../services/api'
+ import { Bar, Doughnut } from 'vue-chartjs'
+ import api from '../../services/api'
+ import AlertBox from '../../components/ui/AlertBox.vue'
+ import BaseButton from '../../components/ui/BaseButton.vue'
+ import { localToday } from '../../utils/dates'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
-const from = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-const to = ref(new Date().toISOString().split('T')[0])
+const from = ref(toLocalMonthStart())
+const to = ref(localToday())
 const report = ref({})
+const loading = ref(false)
+const fetchError = ref('')
 
 onMounted(() => fetchData())
+
 async function fetchData() {
-  const res = await api.get('/admin/reports', { params: { from: from.value, to: to.value } })
-  report.value = res.data
+  if (loading.value) return
+  if (!from.value || !to.value || from.value > to.value) {
+    fetchError.value = 'Rentang tanggal tidak valid.'
+    return
+  }
+
+  loading.value = true
+  fetchError.value = ''
+  try {
+    const res = await api.get('/admin/reports', { params: { from: from.value, to: to.value } })
+    report.value = res.data || {}
+  } catch (error) {
+    fetchError.value = error.response?.data?.message || 'Laporan tidak dapat dimuat.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function toLocalMonthStart() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
 }
 
 const dailyChartData = computed(() => {
@@ -153,7 +188,7 @@ const barOptions = {
     }
   },
   scales: {
-    x: { grid: { display: false }, ticks: { font: { size: 10, weight: '500' }, maxRotation: 45 } },
+    x: { grid: { display: false }, ticks: { font: { size: 12, weight: '500' }, maxRotation: 45 } },
     y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 } } },
   },
 }

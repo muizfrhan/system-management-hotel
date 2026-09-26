@@ -16,6 +16,7 @@ class SettingController extends Controller
         $setting = Cache::remember('hotel_settings', 86400, function () {
             return Setting::first();
         });
+
         return response()->json($setting);
     }
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FacilityController;
 use App\Http\Controllers\Admin\GuestController;
 use App\Http\Controllers\Admin\HousekeepingController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReservationController;
@@ -14,32 +15,34 @@ use App\Http\Controllers\Admin\RoomController;
 use App\Http\Controllers\Admin\RoomTypeController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Guest\BookingController;
 use App\Http\Controllers\Guest\LandingPageController;
 use App\Http\Controllers\Guest\TrackBookingController;
+use App\Http\Controllers\Housekeeper\HousekeepingController as HousekeeperHousekeepingController;
+use App\Http\Controllers\Housekeeper\RoomController as HousekeeperRoomController;
 use App\Http\Controllers\Receptionist\BookingOnlineController as ReceptionistBookingOnlineController;
 use App\Http\Controllers\Receptionist\ChargeController as ReceptionistChargeController;
 use App\Http\Controllers\Receptionist\CheckInOutController as ReceptionistCheckInOutController;
+use App\Http\Controllers\Receptionist\DashboardController as ReceptionistDashboardController;
 use App\Http\Controllers\Receptionist\GuestController as ReceptionistGuestController;
 use App\Http\Controllers\Receptionist\PaymentController as ReceptionistPaymentController;
 use App\Http\Controllers\Receptionist\ReservationController as ReceptionistReservationController;
-use App\Http\Controllers\Housekeeper\HousekeepingController as HousekeeperHousekeepingController;
+use App\Http\Controllers\Receptionist\RoomController as ReceptionistRoomController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function () {
+Route::middleware('throttle:api')->prefix('v1')->group(function () {
 
     Route::post('/auth/login', [LoginController::class, 'login']);
 
     Route::get('/guest/landing', [LandingPageController::class, 'index']);
     Route::get('/guest/room-types', [LandingPageController::class, 'roomTypes']);
     Route::get('/guest/room-types/{roomType}', [LandingPageController::class, 'roomTypeDetail']);
-    Route::post('/guest/booking', [BookingController::class, 'store']);
-    Route::get('/guest/track/{code}', [TrackBookingController::class, 'show']);
-    Route::put('/guest/track/{code}/cancel', [TrackBookingController::class, 'cancel']);
+    Route::post('/guest/booking', [BookingController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/guest/track/{code}', [TrackBookingController::class, 'show'])->middleware('throttle:30,1');
+    Route::put('/guest/track/{code}/cancel', [TrackBookingController::class, 'cancel'])->middleware('throttle:30,1');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth')->group(function () {
 
         Route::post('/auth/logout', [LoginController::class, 'logout']);
         Route::get('/auth/user', [LoginController::class, 'user']);
@@ -87,6 +90,9 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware('role:receptionist')->group(function () {
+            Route::get('/receptionist/dashboard', [ReceptionistDashboardController::class, 'index']);
+            Route::get('/receptionist/rooms', [ReceptionistRoomController::class, 'index']);
+
             Route::get('/receptionist/booking-online', [ReceptionistBookingOnlineController::class, 'index']);
             Route::put('/receptionist/booking-online/{reservation}/confirm', [ReceptionistBookingOnlineController::class, 'confirm']);
             Route::put('/receptionist/booking-online/{reservation}/reject', [ReceptionistBookingOnlineController::class, 'reject']);
@@ -113,6 +119,7 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware('role:housekeeper')->group(function () {
+            Route::get('/housekeeper/rooms', [HousekeeperRoomController::class, 'index']);
             Route::get('/housekeeper/housekeeping', [HousekeeperHousekeepingController::class, 'index']);
             Route::patch('/housekeeper/housekeeping/{room}/done', [HousekeeperHousekeepingController::class, 'done']);
         });

@@ -18,6 +18,7 @@ class HousekeepingController extends Controller
         $rooms = Room::with('roomType')
             ->where('status', 'cleaning')
             ->orderBy('room_number')
+            ->limit(200)
             ->get();
 
         return response()->json($rooms);
@@ -28,7 +29,7 @@ class HousekeepingController extends Controller
         $room = $this->roomStatusService->markAsAvailable($room);
 
         return response()->json([
-            'message' => 'Kamar ' . $room->room_number . ' selesai dibersihkan.',
+            'message' => 'Kamar '.$room->room_number.' selesai dibersihkan.',
             'room' => $room,
         ]);
     }

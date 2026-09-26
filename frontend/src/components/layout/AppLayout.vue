@@ -1,5 +1,12 @@
 <template>
-  <div class="flex h-screen overflow-hidden bg-slate-50">
+  <div class="flex h-dvh overflow-hidden bg-background">
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm focus:font-semibold"
+    >
+      Lewati ke konten utama
+    </a>
+
     <Sidebar
       :user="auth.user"
       :user-role="auth.userRole"
@@ -10,12 +17,24 @@
       @close-mobile="isMobileSidebarOpen = false"
     />
 
-    <main class="flex-1 overflow-y-auto flex flex-col min-w-0 transition-all duration-300">
-      <Navbar :page-title="currentPageTitle" @toggle-sidebar="isMobileSidebarOpen = !isMobileSidebarOpen" />
-      <div class="p-4 md:p-6 lg:p-8 animate-fade-in">
-        <router-view />
-      </div>
-    </main>
+    <div
+       class="flex-1 overflow-y-auto flex flex-col min-w-0"
+       :class="{ 'overflow-hidden': isMobileSidebarOpen }"
+       :inert="isMobileSidebarOpen ? true : undefined"
+    >
+      <Navbar
+        :page-title="currentPageTitle"
+        :drawer-open="isMobileSidebarOpen"
+        @toggle-sidebar="isMobileSidebarOpen = !isMobileSidebarOpen"
+      />
+      <main id="main-content" class="p-4 md:p-6 lg:p-8 max-w-[1600px] w-full mx-auto" tabindex="-1">
+        <router-view v-slot="{ Component, route }">
+          <Transition name="page" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </Transition>
+        </router-view>
+      </main>
+    </div>
   </div>
 </template>
 
@@ -25,15 +44,24 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
 import Sidebar from './Sidebar.vue'
 import Navbar from './Navbar.vue'
+import { useToast } from '../../composables/useToast'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const toast = useToast()
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
 
-watch(() => route.path, () => {
-  isMobileSidebarOpen.value = false
+watch(
+  () => route.fullPath,
+  () => {
+    isMobileSidebarOpen.value = false
+  }
+)
+
+watch(isMobileSidebarOpen, (open) => {
+  if (open) isSidebarCollapsed.value = false
 })
 
 const pageTitles = {
@@ -55,11 +83,19 @@ const pageTitles = {
 const currentPageTitle = computed(() => {
   const segments = route.path.split('/')
   const lastSegment = segments[segments.length - 1]
+  if (route.path.startsWith('/receptionist') && lastSegment === 'rooms') return 'Ketersediaan Kamar'
+  if (route.path.startsWith('/receptionist') && lastSegment === 'dashboard') return 'Dasbor Front Desk'
+  if (route.path.startsWith('/housekeeper') && lastSegment === 'housekeeping') return 'Tata Graha'
   return pageTitles[lastSegment] || 'Dasbor'
 })
 
 async function handleLogout() {
-  await auth.logout()
-  router.push('/login')
+  try {
+    await auth.logout()
+  } catch {
+    toast.error('Permintaan logout gagal, tetapi sesi lokal telah dihentikan.')
+  } finally {
+    await router.replace('/login')
+  }
 }
 </script>

@@ -1,6 +1,15 @@
 vendor
 node_modules
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+auth.json
+secrets
+public/build
 storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*

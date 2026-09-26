@@ -13,17 +13,16 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && printf 'expose_php=Off\n' > /usr/local/etc/php/conf.d/security.ini \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.9.3 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
 COPY . .
 
 RUN composer install --no-interaction --optimize-autoloader
-
-RUN cp .env.example .env 2>/dev/null || true
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

@@ -1,88 +1,140 @@
 <template>
   <!-- Overlay penutup untuk mobile -->
-  <div
-    v-if="isMobileOpen"
-    class="fixed inset-0 bg-slate-900/40 z-40 lg:hidden"
-    @click="$emit('close-mobile')"
-  ></div>
+  <Transition name="fade">
+    <div
+      v-if="isMobileOpen"
+      class="fixed inset-0 bg-slate-900/40 z-40 lg:hidden"
+      aria-hidden="true"
+      @click="$emit('close-mobile')"
+    ></div>
+  </Transition>
 
   <aside
+    ref="asideEl"
     :class="[
-      'flex flex-col bg-white border-r border-slate-100 z-50 relative transition-all duration-300 ease-in-out',
-      // Mobile: off-canvas drawer
-      'fixed inset-y-0 left-0 max-lg:shadow-2xl',
+      'flex flex-col bg-surface border-r border-border-subtle z-50 relative',
+      'transition-[transform,width] duration-200 ease-out',
+      'fixed inset-y-0 left-0 max-lg:shadow-2xl w-[min(16rem,85vw)]',
       isMobileOpen ? 'translate-x-0' : '-translate-x-full',
-      // Desktop: static sidebar
       'lg:translate-x-0 lg:static lg:z-20 lg:shadow-none',
-      isCollapsed ? 'w-64 lg:w-20 lg:items-center' : 'w-64'
+      effectiveCollapsed ? 'lg:w-20 lg:items-center' : 'lg:w-64',
     ]"
+    :aria-hidden="!isMobileOpen && isMobile ? 'true' : undefined"
+    :inert="!isMobileOpen && isMobile ? true : undefined"
   >
-    <div :class="['py-5 border-b border-slate-100 flex items-center transition-all h-[76px]', isCollapsed ? 'justify-center px-0' : 'justify-between px-6']">
-      <div v-if="!isCollapsed" class="flex items-center gap-3 whitespace-nowrap overflow-hidden transition-all duration-300">
+    <div
+      :class="[
+        'py-5 border-b border-border-subtle flex items-center h-[76px]',
+        'transition-[padding,justify-content] duration-200 ease-out',
+        effectiveCollapsed ? 'justify-center px-0' : 'justify-between px-6',
+      ]"
+    >
+      <div
+        v-if="!effectiveCollapsed"
+        class="flex items-center gap-3 whitespace-nowrap overflow-hidden transition-[opacity] duration-200 ease-out"
+      >
         <LogoIcon :size="28" />
         <div>
-          <h1 class="text-lg font-bold text-slate-900 tracking-tight">Lokanata</h1>
-          <p class="text-[9px] mt-0.5 uppercase font-[800] tracking-[0.2em] text-slate-400">Hotel Admin</p>
+          <h1 class="text-lg font-bold text-ink tracking-tight">Lokanata</h1>
+          <p class="text-[9px] mt-0.5 uppercase font-extrabold tracking-[0.2em] text-ink-muted">
+            Hotel Admin
+          </p>
         </div>
       </div>
-      
-      <!-- Toggle Button inline with Logo -->
-      <button 
-        @click="$emit('toggle')" 
-        class="text-slate-400 hover:text-cyan-600 hover:bg-slate-50 p-1.5 rounded-lg transition-colors shrink-0"
-        :title="isCollapsed ? 'Expand Menu' : 'Collapse Menu'"
+
+      <button
+        type="button"
+        @click="$emit('toggle')"
+        class="hidden lg:flex text-ink-muted hover:text-primary hover:bg-surface-muted p-2.5 min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors shrink-0"
+        :title="effectiveCollapsed ? 'Perluas menu' : 'Ciutkan menu'"
+        :aria-label="effectiveCollapsed ? 'Perluas menu' : 'Ciutkan menu'"
       >
-        <ChevronRight v-if="isCollapsed" class="w-5 h-5" />
-        <ChevronLeft v-else class="w-5 h-5" />
+        <ChevronRight v-if="effectiveCollapsed" class="w-5 h-5" aria-hidden="true" />
+        <ChevronLeft v-else class="w-5 h-5" aria-hidden="true" />
       </button>
     </div>
-    
-    <nav class="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto overflow-x-hidden w-full custom-scrollbar">
+
+    <nav
+      class="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto overflow-x-hidden w-full custom-scrollbar"
+      aria-label="Navigasi utama"
+    >
       <template v-for="section in filteredMenu" :key="section.title">
-        <p v-if="!isCollapsed" class="px-3 pt-6 pb-2 text-[10px] uppercase tracking-[0.15em] font-bold text-slate-400 first:pt-0 whitespace-nowrap">{{ section.title }}</p>
-        <div v-else class="w-full h-px bg-slate-100 my-4 first:hidden"></div>
+        <p v-if="!effectiveCollapsed" class="sidebar-section-label first:pt-0 whitespace-nowrap">
+          {{ section.title }}
+        </p>
+        <div v-else class="w-full h-px bg-border-subtle my-4 first:hidden" aria-hidden="true"></div>
 
         <router-link
           v-for="item in section.items"
           :key="item.path"
           :to="item.path"
-          :title="isCollapsed ? item.label : ''"
+          :title="effectiveCollapsed ? item.label : undefined"
           :class="[
-            'sidebar-link group relative', 
-            isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto rounded-xl' : 'px-4 w-full'
+            'sidebar-link group relative min-h-11',
+            effectiveCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto rounded-xl' : 'px-4 w-full',
           ]"
           active-class="active"
         >
-          <component :is="item.icon" :class="['shrink-0 opacity-60 group-hover:opacity-100 group-[.active]:opacity-100 transition-all', isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3']" />
-          <span v-if="!isCollapsed" class="whitespace-nowrap font-medium">{{ item.label }}</span>
+          <component
+            :is="item.icon"
+            :class="[
+              'shrink-0 opacity-60 group-hover:opacity-100 group-[.active]:opacity-100 transition-[opacity,transform] duration-150 ease-out',
+              effectiveCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3',
+            ]"
+            aria-hidden="true"
+          />
+          <span v-if="!effectiveCollapsed" class="whitespace-nowrap font-medium">{{ item.label }}</span>
         </router-link>
       </template>
     </nav>
-    
-    <div :class="['p-4 border-t border-slate-100 w-full flex flex-col', isCollapsed ? 'items-center px-2' : '']">
-      <div :class="['flex items-center gap-3', isCollapsed ? 'justify-center p-0 mb-2' : 'px-3 py-2']">
-        <div class="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-sm font-bold text-white shadow-md shadow-cyan-400/20">
+
+    <div
+      :class="[
+        'p-4 border-t border-border-subtle w-full flex flex-col',
+        effectiveCollapsed ? 'items-center px-2' : '',
+      ]"
+    >
+      <div :class="['flex items-center gap-3', effectiveCollapsed ? 'justify-center p-0 mb-2' : 'px-3 py-2']">
+        <div
+          class="w-9 h-9 shrink-0 rounded-full bg-linear-to-br from-primary-light to-info flex items-center justify-center text-sm font-bold text-white"
+          aria-hidden="true"
+        >
           {{ user?.name?.charAt(0)?.toUpperCase() }}
         </div>
-        <div v-if="!isCollapsed" class="flex-1 min-w-0">
-          <p class="text-sm font-bold text-slate-900 truncate">{{ user?.name }}</p>
-          <p class="text-[11px] capitalize font-semibold text-slate-500">{{ roleLabel }}</p>
+        <div v-if="!effectiveCollapsed" class="flex-1 min-w-0">
+          <p class="text-sm font-bold text-ink truncate">{{ user?.name }}</p>
+          <p class="text-[11px] capitalize font-semibold text-ink-secondary">{{ roleLabel }}</p>
         </div>
       </div>
-      <button @click="$emit('logout')" :title="isCollapsed ? 'Keluar' : ''" :class="['sidebar-link group mt-1 !text-red-500 hover:!bg-red-50', isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto rounded-xl' : 'w-full px-4']">
-        <LogOut :class="['shrink-0 opacity-70 group-hover:opacity-100', isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3']" />
-        <span v-if="!isCollapsed" class="font-medium">Keluar</span>
+      <button
+        type="button"
+        @click="$emit('logout')"
+        :title="effectiveCollapsed ? 'Keluar' : undefined"
+        :aria-label="effectiveCollapsed ? 'Keluar' : undefined"
+        :class="[
+          'sidebar-link group mt-1 min-h-11 !text-danger hover:!bg-danger-soft',
+          effectiveCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto rounded-xl' : 'w-full px-4',
+        ]"
+      >
+        <LogOut
+          :class="[
+            'shrink-0 opacity-70 group-hover:opacity-100',
+            effectiveCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3',
+          ]"
+          aria-hidden="true"
+        />
+        <span v-if="!effectiveCollapsed" class="font-medium">Keluar</span>
       </button>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  LayoutDashboard, Tags, DoorOpen, Sparkles, Globe, 
-  ClipboardList, KeyRound, CreditCard, Users, Paintbrush, UserCircle, 
-  BarChart3, Settings, LogOut, ChevronLeft, ChevronRight
+  LayoutDashboard, Tags, DoorOpen, Sparkles, Globe,
+  ClipboardList, KeyRound, CreditCard, Users, Paintbrush, UserCircle,
+  BarChart3, Settings, LogOut, ChevronLeft, ChevronRight,
 } from 'lucide-vue-next'
 import LogoIcon from '../LogoIcon.vue'
 
@@ -93,7 +145,43 @@ const props = defineProps({
   isMobileOpen: { type: Boolean, default: false },
 })
 
-defineEmits(['logout', 'toggle', 'close-mobile'])
+const emit = defineEmits(['logout', 'toggle', 'close-mobile'])
+
+const isMobile = ref(false)
+const asideEl = ref(null)
+const effectiveCollapsed = computed(() => props.isCollapsed && !isMobile.value)
+
+function updateViewport() {
+  isMobile.value = window.innerWidth < 1024
+}
+
+function onKeydown(e) {
+  if (e.key === 'Escape' && props.isMobileOpen) {
+    emit('close-mobile')
+    document.querySelector('[aria-label="Buka menu navigasi"]')?.focus()
+  }
+}
+
+onMounted(() => {
+  updateViewport()
+  window.addEventListener('resize', updateViewport)
+  document.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', updateViewport)
+  document.removeEventListener('keydown', onKeydown)
+})
+
+// focus first link when drawer opens
+watch(
+  () => props.isMobileOpen,
+  async (open) => {
+    if (open) {
+      await nextTick()
+      asideEl.value?.querySelector('a, button')?.focus()
+    }
+  }
+)
 
 const roleLabel = computed(() => {
   const labels = { admin: 'Administrator', receptionist: 'Resepsionis', housekeeper: 'Tata Graha' }
@@ -104,14 +192,14 @@ const menu = [
   {
     title: 'Utama',
     items: [
-      { path: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard, roles: ['admin'] },
+      { label: 'Dasbor', icon: LayoutDashboard, roles: ['admin', 'receptionist'], adminPath: '/admin/dashboard', receptionistPath: '/receptionist/dashboard' },
     ],
   },
   {
     title: 'Kamar',
     items: [
       { path: '/admin/room-types', label: 'Tipe Kamar', icon: Tags, roles: ['admin'] },
-      { path: '/admin/rooms', label: 'Daftar Kamar', icon: DoorOpen, roles: ['admin'] },
+      { label: 'Ketersediaan', icon: DoorOpen, roles: ['admin', 'receptionist'], adminPath: '/admin/rooms', receptionistPath: '/receptionist/rooms' },
       { path: '/admin/facilities', label: 'Fasilitas', icon: Sparkles, roles: ['admin'] },
     ],
   },
@@ -143,11 +231,11 @@ const menu = [
 
 const filteredMenu = computed(() => {
   return menu
-    .map(section => ({
+    .map((section) => ({
       ...section,
       items: section.items
-        .filter(item => item.roles.includes(props.userRole))
-        .map(item => {
+        .filter((item) => item.roles.includes(props.userRole))
+        .map((item) => {
           if (item.path) return item
           let path = item.adminPath
           if (props.userRole === 'receptionist' && item.receptionistPath) path = item.receptionistPath
@@ -155,36 +243,6 @@ const filteredMenu = computed(() => {
           return { ...item, path }
         }),
     }))
-    .filter(section => section.items.length > 0)
+    .filter((section) => section.items.length > 0)
 })
 </script>
-
-<style scoped>
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.625rem 0.875rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
-}
-
-.sidebar-link:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-.sidebar-link.active {
-  background-color: #ecfeff;
-  color: #06b6d4;
-  font-weight: 600;
-}
-
-.sidebar-link.active :deep(svg) {
-  color: #06b6d4 !important;
-  opacity: 1 !important;
-}
-</style>

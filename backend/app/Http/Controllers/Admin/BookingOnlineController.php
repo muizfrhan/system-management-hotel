@@ -18,6 +18,7 @@ class BookingOnlineController extends Controller
         $bookings = Reservation::with(['guest', 'room.roomType'])
             ->where('status', 'pending')
             ->latest()
+            ->limit(100)
             ->get();
 
         return response()->json($bookings);

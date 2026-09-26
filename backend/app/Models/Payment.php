@@ -7,12 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
+    protected $hidden = [
+        'idempotency_key',
+    ];
+
     protected $fillable = [
         'reservation_id',
         'amount',
         'payment_method',
         'status',
         'paid_at',
+        'idempotency_key',
     ];
 
     protected function casts(): array

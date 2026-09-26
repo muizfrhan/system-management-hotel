@@ -8,6 +8,7 @@ use App\Services\PaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
@@ -26,15 +27,23 @@ class PaymentController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key', ''));
+        if ($idempotencyKey === '' || strlen($idempotencyKey) > 100) {
+            throw ValidationException::withMessages([
+                'idempotency_key' => 'Header Idempotency-Key wajib diisi dan maksimal 100 karakter.',
+            ]);
+        }
+
         $validated = $request->validate([
-            'reservation_id' => 'required|exists:reservations,id',
-            'amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|string|max:50',
+            'reservation_id' => 'required|integer|exists:reservations,id',
+            'amount' => 'required|numeric|decimal:0,2|min:0.01|max:9999999999.99',
+            'payment_method' => 'required|string|in:cash,card,transfer,qris',
         ]);
+        $validated['idempotency_key'] = $idempotencyKey;
 
         $payment = $this->paymentService->recordPayment($validated);
 
-        return response()->json($payment, 201);
+        return response()->json($payment, $payment->wasRecentlyCreated ? 201 : 200);
     }
 
     public function invoice(Payment $payment): JsonResponse
@@ -60,9 +69,12 @@ class PaymentController extends Controller
             'room_total' => $totals['room_total'],
             'charges_total' => $totals['charges_total'],
             'grand_total' => $totals['grand_total'],
+            'paid_total' => $totals['paid_total'],
+            'remaining' => $totals['remaining'],
+            'settlement_status' => $totals['settlement_status'],
         ]);
 
-        $filename = 'invoice-' . $payment->reservation->reservation_code . '.pdf';
+        $filename = 'invoice-'.$payment->reservation->reservation_code.'.pdf';
 
         return $pdf->stream($filename);
     }

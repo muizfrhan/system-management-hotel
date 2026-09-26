@@ -2,41 +2,79 @@
 
 namespace App\Services;
 
-use App\Models\Payment;
 use App\Models\Reservation;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CheckInOutService
 {
     public function processCheckIn(Reservation $reservation): Reservation
     {
-        $reservation->update(['status' => 'checked_in']);
-        $reservation->room->update(['status' => 'occupied']);
+        $checkedIn = DB::transaction(function () use ($reservation) {
+            $lockedReservation = Reservation::lockForUpdate()->findOrFail($reservation->id);
 
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+            if ($lockedReservation->status !== 'confirmed') {
+                throw new ConflictHttpException('Hanya reservasi berstatus terkonfirmasi yang dapat	check-in.');
+            }
 
-        return $reservation->load(['guest', 'room.roomType', 'charges']);
+            if ($lockedReservation->check_in_date->isFuture()) {
+                throw new ConflictHttpException('Check-in belum dapat dilakukan sebelum tanggal check-in reservasi.');
+            }
+
+            $room = $lockedReservation->room()->lockForUpdate()->firstOrFail();
+
+            if (! in_array($room->status, ['available', 'reserved'], true)) {
+                throw new ConflictHttpException('Status kamar tidak memungkinkan proses check-in.');
+            }
+
+            $hasOccupiedConflict = Reservation::where('room_id', $room->id)
+                ->where('id', '!=', $lockedReservation->id)
+                ->where('status', 'checked_in')
+                ->where('check_in_date', '<', $lockedReservation->check_out_date)
+                ->where('check_out_date', '>', $lockedReservation->check_in_date)
+                ->exists();
+
+            if ($hasOccupiedConflict) {
+                throw new ConflictHttpException('Kamar sedang digunakan oleh reservasi aktif lain.');
+            }
+
+            $lockedReservation->update(['status' => 'checked_in']);
+            $room->update(['status' => 'occupied']);
+
+            return $lockedReservation;
+        });
+
+        Cache::forget('dashboard_stats');
+
+        return $checkedIn->load(['guest', 'room.roomType', 'charges', 'payments']);
     }
 
     public function processCheckOut(Reservation $reservation): Reservation
     {
-        $reservation->update(['status' => 'checked_out']);
-        $reservation->room->update(['status' => 'cleaning']);
+        $checkedOut = DB::transaction(function () use ($reservation) {
+            $lockedReservation = Reservation::lockForUpdate()->findOrFail($reservation->id);
 
-        $chargesTotal = (float) $reservation->charges()->sum('total_price');
-        $folioTotal = (float) $reservation->total_price + $chargesTotal;
+            if ($lockedReservation->status !== 'checked_in') {
+                throw new ConflictHttpException('Hanya reservasi yang sudah check-in dapat check-out.');
+            }
 
-        if (!Payment::where('reservation_id', $reservation->id)->exists()) {
-            Payment::create([
-                'reservation_id' => $reservation->id,
-                'amount' => $folioTotal,
-                'payment_method' => 'Sistem Otomatis (Cash)',
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
-        }
+            $chargesTotal = (float) $lockedReservation->charges()->sum('total_price');
+            $grandTotal = (float) $lockedReservation->total_price + $chargesTotal;
+            $paidTotal = (float) $lockedReservation->payments()->where('status', 'paid')->sum('amount');
+            if ($grandTotal > $paidTotal) {
+                throw new ConflictHttpException('Sisa tagihan harus dilunasi sebelum check-out.');
+            }
 
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+            $room = $lockedReservation->room()->lockForUpdate()->firstOrFail();
+            $lockedReservation->update(['status' => 'checked_out']);
+            $room->update(['status' => 'cleaning']);
 
-        return $reservation->load(['guest', 'room.roomType', 'charges']);
+            return $lockedReservation;
+        });
+
+        Cache::forget('dashboard_stats');
+
+        return $checkedOut->load(['guest', 'room.roomType', 'charges', 'payments']);
     }
 }

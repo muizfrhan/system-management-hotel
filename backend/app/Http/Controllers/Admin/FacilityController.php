@@ -15,6 +15,7 @@ class FacilityController extends Controller
         $facilities = Cache::remember('facilities_list', 86400, function () {
             return Facility::all();
         });
+
         return response()->json($facilities);
     }
 
@@ -28,6 +29,8 @@ class FacilityController extends Controller
 
         $facility = Facility::create($validated);
         Cache::forget('facilities_list');
+        Cache::forget('room_types_list');
+
         return response()->json($facility, 201);
     }
 
@@ -41,6 +44,8 @@ class FacilityController extends Controller
 
         $facility->update($validated);
         Cache::forget('facilities_list');
+        Cache::forget('room_types_list');
+
         return response()->json($facility);
     }
 
@@ -48,6 +53,8 @@ class FacilityController extends Controller
     {
         $facility->delete();
         Cache::forget('facilities_list');
+        Cache::forget('room_types_list');
+
         return response()->json(['message' => 'Fasilitas berhasil dihapus.']);
     }
 }
