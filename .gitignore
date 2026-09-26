@@ -26,6 +26,9 @@ backend/bootstrap/cache/*
 # Frontend Build
 frontend/dist/
 
+# Demo video (terlalu besar untuk git — upload manual ke GitHub, lihat README)
+docs/demo-video/
+
 # Docker
 db-data/
 

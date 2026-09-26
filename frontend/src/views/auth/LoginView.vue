@@ -48,7 +48,7 @@
       </div>
 
       <p class="text-center mt-8 text-xs text-slate-400">
-        Copyright &copy; {{ new Date().getFullYear() }} | Developed by Cybha.
+        Copyright &copy; {{ new Date().getFullYear() }} Muhamad Farhan Muizaddin.
       </p>
     </div>
     </section>

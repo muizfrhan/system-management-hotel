@@ -21,21 +21,69 @@ Autentikasi portal staf menggunakan session cookie Laravel Sanctum untuk SPA (CS
 
 ## Demo Aplikasi
 
-### Pengunjung (Guest Booking)
+> Rekaman di bawah dibuat dari website versi terkini. Video disimpan lokal di `docs/demo-video/`
+> (diabaikan git karena berukuran besar). Untuk menampilkannya di README ini, unggah masing-masing
+> file ke GitHub lewat **Edit file → seret file ke kolom editor**, lalu GitHub otomatis membuat
+> tautan `user-attachments` yang bisa diputar langsung.
 
-https://github.com/user-attachments/assets/6746f5f3-f456-476c-bdca-a88a9162b07e
+### 1. Pengunjung (Guest Booking)
 
-### Admin (Manajemen Sistem)
+Alur: beranda → cari kamar → detail kamar (galeri auto-slide) → form booking → lacak reservasi.
 
-https://github.com/user-attachments/assets/6c0db86c-0a54-4648-912d-7f9ff099f3cf
+| Halaman | Screenshot |
+| --- | --- |
+| Beranda | ![Beranda](docs/screenshots/01-landing-hero.png) |
+| Daftar kamar | ![Daftar kamar](docs/screenshots/02-daftar-kamar.png) |
+| Detail kamar | ![Detail kamar](docs/screenshots/03-detail-kamar.png) |
+| Form booking | ![Form booking](docs/screenshots/04-form-booking.png) |
+| Lacak reservasi | ![Lacak reservasi](docs/screenshots/05-lacak-reservasi.png) |
 
-### Resepsionis (Operasional Harian)
+Video: `docs/demo-video/01-pengunjung.mp4`
 
-https://github.com/user-attachments/assets/24cb0659-71ca-4765-80a2-bede2903dc41
+### 2. Admin (Manajemen Sistem)
 
-### Housekeeping (Tata Graha)
+Alur: dashboard → tipe kamar → master kamar → booking online → reservasi → check-in/out →
+pembayaran → tamu → fasilitas → housekeeping → staf → laporan → pengaturan.
 
-https://github.com/user-attachments/assets/3a730b09-f9d5-447e-83f9-87296d7a1880
+| Halaman | Screenshot |
+| --- | --- |
+| Dashboard | ![Dashboard admin](docs/screenshots/06-admin-dashboard.png) |
+| Tipe kamar | ![Tipe kamar](docs/screenshots/07-admin-tipe-kamar.png) |
+| Reservasi | ![Reservasi](docs/screenshots/08-admin-reservasi.png) |
+| Check-in/out | ![Check-in/out](docs/screenshots/09-admin-checkinout.png) |
+| Laporan | ![Laporan](docs/screenshots/10-admin-laporan.png) |
+
+Video: `docs/demo-video/02-admin.mp4`
+
+### 3. Resepsionis (Operasional Harian)
+
+Alur: dashboard → status kamar → booking online → reservasi → check-in/out → pembayaran → tamu.
+
+| Halaman | Screenshot |
+| --- | --- |
+| Dashboard | ![Dashboard resepsionis](docs/screenshots/11-resepsionis-dashboard.png) |
+| Status kamar | ![Status kamar](docs/screenshots/12-resepsionis-kamar.png) |
+
+Video: `docs/demo-video/03-resepsionis.mp4`
+
+### 4. Housekeeping (Tata Graha)
+
+Daftar kamar yang perlu dibersihkan beserta pembaruan status kebersihan.
+
+![Housekeeping](docs/screenshots/13-housekeeping.png)
+
+Video: `docs/demo-video/04-housekeeping.mp4`
+
+### Akun Demo
+
+| Peran | Email |
+| --- | --- |
+| Admin | `admin@lokanata.com` |
+| Resepsionis | `resepsionis@lokanata.com` |
+| Tata Graha | `housekeeping@lokanata.com` |
+
+Password akun demo diatur melalui environment `DEMO_USER_PASSWORD` dan hanya dibuat pada
+environment `local`/`testing`.
 
 ---
 
@@ -202,9 +250,13 @@ lokanata-hotel-management/
 |   |-- diagrams/                   # SVG Diagram (ERD, Use Case, User Flow)
 |   |-- Dockerfile
 |   |-- package.json
-|   |-- vite.config.js
+|
+|-- docs/
+|   |-- screenshots/               # Screenshot halaman (dirender di README)
+|   |-- demo-video/                # Rekaman demo (diabaikan git, unggah manual)
 |
 |-- docker-compose.yml
+
 |-- .env.example
 |-- .gitignore
 |-- README.md
