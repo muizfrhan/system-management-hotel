@@ -21,58 +21,68 @@ Autentikasi portal staf menggunakan session cookie Laravel Sanctum untuk SPA (CS
 
 ## Demo Aplikasi
 
-> Rekaman di bawah dibuat dari website versi terkini. Video disimpan lokal di `docs/demo-video/`
-> (diabaikan git karena berukuran besar). Untuk menampilkannya di README ini, unggah masing-masing
-> file ke GitHub lewat **Edit file → seret file ke kolom editor**, lalu GitHub otomatis membuat
-> tautan `user-attachments` yang bisa diputar langsung.
+Demo dipecah menjadi **22 klip pendek** (6–17 detik per klip) supaya ringan diputar dan mudah diunggah.
+Semua rekaman memakai data nyata dari database pengembangan, bukan data dummy.
+
+> **Cara menampilkan video di README ini**
+> File video tersimpan di `docs/demo-video/` (diabaikan git karena berukuran besar). GitHub tidak
+> bisa memutar video dari path di dalam repo, jadi perlu diunggah manual:
+>
+> 1. Buka repo ini → **Edit README.md**
+> 2. Seret file `.mp4` ke kolom editor — GitHub otomatis membuat tautan `user-attachments`
+> 3. Tempel tautan tersebut ke kolom **Video** pada tabel di bawah
+>
+> Kolom Screenshot sudah langsung tampil tanpa langkah tambahan.
 
 ### 1. Pengunjung (Guest Booking)
 
-Alur: beranda → cari kamar → detail kamar (galeri auto-slide) → form booking → lacak reservasi.
+Alur pemesanan tamu dari mencari kamar sampai melacak reservasi.
 
-| Halaman | Screenshot |
-| --- | --- |
-| Beranda | ![Beranda](docs/screenshots/01-landing-hero.png) |
-| Daftar kamar | ![Daftar kamar](docs/screenshots/02-daftar-kamar.png) |
-| Detail kamar | ![Detail kamar](docs/screenshots/03-detail-kamar.png) |
-| Form booking | ![Form booking](docs/screenshots/04-form-booking.png) |
-| Lacak reservasi | ![Lacak reservasi](docs/screenshots/05-lacak-reservasi.png) |
-
-Video: `docs/demo-video/01-pengunjung.mp4`
+| # | Halaman | Durasi | Video | Screenshot |
+| --- | --- | --- | --- | --- |
+| 1 | Beranda (hero + form cari kamar) | 11 dtk | `tamu-01-beranda.mp4` | ![Beranda](docs/screenshots/01-landing-hero.png) |
+| 2 | Beranda (fasilitas, galeri, lokasi) | 14 dtk | `tamu-02-fitur-beranda.mp4` | — |
+| 3 | Daftar kamar | 7 dtk | `tamu-03-daftar-kamar.mp4` | ![Daftar kamar](docs/screenshots/02-daftar-kamar.png) |
+| 4 | Detail kamar (galeri auto-slide) | 17 dtk | `tamu-04-detail-kamar.mp4` | ![Detail kamar](docs/screenshots/03-detail-kamar.png) |
+| 5 | Form booking | 8 dtk | `tamu-05-form-booking.mp4` | ![Form booking](docs/screenshots/04-form-booking.png) |
+| 6 | Lacak reservasi | 6 dtk | `tamu-06-lacak-reservasi.mp4` | ![Lacak reservasi](docs/screenshots/05-lacak-reservasi.png) |
 
 ### 2. Admin (Manajemen Sistem)
 
-Alur: dashboard → tipe kamar → master kamar → booking online → reservasi → check-in/out →
-pembayaran → tamu → fasilitas → housekeeping → staf → laporan → pengaturan.
+Seluruh modul, dari master data, operasional harian, hingga laporan keuangan.
 
-| Halaman | Screenshot |
-| --- | --- |
-| Dashboard | ![Dashboard admin](docs/screenshots/06-admin-dashboard.png) |
-| Tipe kamar | ![Tipe kamar](docs/screenshots/07-admin-tipe-kamar.png) |
-| Reservasi | ![Reservasi](docs/screenshots/08-admin-reservasi.png) |
-| Check-in/out | ![Check-in/out](docs/screenshots/09-admin-checkinout.png) |
-| Laporan | ![Laporan](docs/screenshots/10-admin-laporan.png) |
-
-Video: `docs/demo-video/02-admin.mp4`
+| # | Modul | Durasi | Video | Screenshot |
+| --- | --- | --- | --- | --- |
+| 1 | Dashboard (statistik & grafik) | 7 dtk | `admin-01-dashboard.mp4` | ![Dashboard](docs/screenshots/06-admin-dashboard.png) |
+| 2 | Tipe kamar | 6 dtk | `admin-02-tipe-kamar.mp4` | ![Tipe kamar](docs/screenshots/07-admin-tipe-kamar.png) |
+| 3 | Master kamar & fasilitas | 10 dtk | `admin-03-master-kamar.mp4` | — |
+| 4 | Booking online & reservasi | 12 dtk | `admin-04-booking-reservasi.mp4` | ![Reservasi](docs/screenshots/08-admin-reservasi.png) |
+| 5 | Check-in / check-out | 7 dtk | `admin-05-checkinout.mp4` | ![Check-in/out](docs/screenshots/09-admin-checkinout.png) |
+| 6 | Pembayaran | 7 dtk | `admin-06-pembayaran.mp4` | — |
+| 7 | Data tamu | 6 dtk | `admin-07-tamu.mp4` | — |
+| 8 | Housekeeping & staf | 10 dtk | `admin-08-housekeeping-staf.mp4` | — |
+| 9 | Laporan | 7 dtk | `admin-09-laporan.mp4` | ![Laporan](docs/screenshots/10-admin-laporan.png) |
+| 10 | Pengaturan | 6 dtk | `admin-10-pengaturan.mp4` | — |
 
 ### 3. Resepsionis (Operasional Harian)
 
-Alur: dashboard → status kamar → booking online → reservasi → check-in/out → pembayaran → tamu.
+Fokus pada penanganan tamu di front desk.
 
-| Halaman | Screenshot |
-| --- | --- |
-| Dashboard | ![Dashboard resepsionis](docs/screenshots/11-resepsionis-dashboard.png) |
-| Status kamar | ![Status kamar](docs/screenshots/12-resepsionis-kamar.png) |
-
-Video: `docs/demo-video/03-resepsionis.mp4`
+| # | Modul | Durasi | Video | Screenshot |
+| --- | --- | --- | --- | --- |
+| 1 | Dashboard | 7 dtk | `resepsionis-01-dashboard.mp4` | ![Dashboard](docs/screenshots/11-resepsionis-dashboard.png) |
+| 2 | Status kamar | 7 dtk | `resepsionis-02-kamar.mp4` | ![Status kamar](docs/screenshots/12-resepsionis-kamar.png) |
+| 3 | Booking online & reservasi | 11 dtk | `resepsionis-03-booking-reservasi.mp4` | — |
+| 4 | Check-in / check-out | 7 dtk | `resepsionis-04-checkinout.mp4` | — |
+| 5 | Pembayaran & data tamu | 10 dtk | `resepsionis-05-pembayaran-tamu.mp4` | — |
 
 ### 4. Housekeeping (Tata Graha)
 
 Daftar kamar yang perlu dibersihkan beserta pembaruan status kebersihan.
 
-![Housekeeping](docs/screenshots/13-housekeeping.png)
-
-Video: `docs/demo-video/04-housekeeping.mp4`
+| # | Modul | Durasi | Video | Screenshot |
+| --- | --- | --- | --- | --- |
+| 1 | Status kebersihan kamar | 7 dtk | `housekeeping-01-status-kebersihan.mp4` | ![Housekeeping](docs/screenshots/13-housekeeping.png) |
 
 ### Akun Demo
 
@@ -84,8 +94,6 @@ Video: `docs/demo-video/04-housekeeping.mp4`
 
 Password akun demo diatur melalui environment `DEMO_USER_PASSWORD` dan hanya dibuat pada
 environment `local`/`testing`.
-
----
 
 ## Struktur & Perancangan Sistem
 
